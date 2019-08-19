@@ -8,6 +8,12 @@ export default class Board extends cc.Component {
     @property(cc.Label)
     private scoreLabel: cc.Label = null;
 
+    @property(cc.Label)
+    private highScoreLabel: cc.Label = null;
+
+    @property(cc.Label)
+    private gameOver: cc.Label = null;
+
     @property(cc.Node)
     private tileContainer: cc.Node = null;
 
@@ -26,6 +32,8 @@ export default class Board extends cc.Component {
 
     private theScore: number = 0;
 
+    private highScore: number = 0;
+
     // 方便查找元素并消除
     private hashMap: Map<number, MapItem> = new Map<number, MapItem>();
 
@@ -41,13 +49,20 @@ export default class Board extends cc.Component {
     }
 
     protected onLoad() {
+        this.gameOver.node.opacity = 0;
         this.theScore = 0;
+        this.highScore = cc.sys.localStorage.getItem("highScore");
         this.updateScore();
         this.setHexagonMap();
     }
 
     private updateScore() {
+        if(this.theScore > this.highScore){
+            this.highScore = this.theScore;
+            cc.sys.localStorage.setItem("highScore", this.highScore.toString());
+        }
         this.scoreLabel.string = "Score:" + this.theScore;
+        this.highScoreLabel.string = "highScore:" + this.highScore;
     }
 
     private setHexagonMap() {
@@ -209,7 +224,20 @@ export default class Board extends cc.Component {
 
         this.checkLose();
     }
+
+
     private checkLose() {
+        /*
+        // 打印输出  观察
+        let index = 1;
+        for(const it of this.tileContainer.children){
+            let theTileList: number[][] = it.getComponent('TileItem').theList;
+            console.log("index : " + index++);
+            for(const i of theTileList) {
+                console.log(i[0] + " , " + i[1]);
+            }
+        }*/
+
         // 判断当前有几个不能继续移动的方块
         let num = 0;
 
@@ -248,18 +276,21 @@ export default class Board extends cc.Component {
             else it.opacity = 255;
 
         }
-        console.log("the:" + num);
 
         if(num == 3){
-            this.gameLose();
+            this.gameOver.node.opacity = 255;
         }
     }
 
-    private gameLose() {
+    private restartGame() {
         this.theScore = 0;
+        this.gameOver.node.opacity = 0;
         this.updateScore();
         this.resetBoard();
-        this.checkLose();
+        // 把下面的方块的透明度改变
+        for(const it of this.tileContainer.children){
+            it.opacity = 255;
+        }
     }
 
 }
